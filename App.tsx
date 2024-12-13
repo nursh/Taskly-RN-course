@@ -3,17 +3,36 @@ import {
   StyleSheet,
   Text,
   View,
-  PixelRatio,
+  Alert,
   TouchableOpacity,
 } from "react-native";
 import { theme } from "./theme";
 
 export default function App() {
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Are you sure you want to delete this',
+      'it will be gone for good',
+      [
+        {
+          text: "Yes",
+          onPress: () => console.log('ok, deleting...'),
+          style: 'destructive'
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        }
+      ]
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.itemContainer}>
       <Text style={styles.itemText}>Coffee</Text>
-        <TouchableOpacity style={styles.button} onPress={() => console.log('Press')} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.button} onPress={handleDelete} activeOpacity={0.8}>
           <Text style={styles.buttonText}>Delete</Text>
         </TouchableOpacity>
       </View>
