@@ -1,14 +1,26 @@
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import AntDesign from '@expo/vector-icons/AntDesign'
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from "react-native";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { theme } from "../theme";
 
 type Props = {
   name: string;
   isCompleted?: boolean;
   onDelete: () => void;
+  onToggleComplete: () => void;
 };
 
-export function ShoppingListItem({ name, isCompleted, onDelete }: Props) {
+export function ShoppingListItem({
+  name,
+  isCompleted,
+  onDelete,
+  onToggleComplete,
+}: Props) {
   const handleDelete = () => {
     Alert.alert(
       `Are you sure you want to delete ${name}`,
@@ -28,29 +40,29 @@ export function ShoppingListItem({ name, isCompleted, onDelete }: Props) {
   };
 
   return (
-    <>
-      <View
+    <Pressable
+      style={[
+        styles.itemContainer,
+        isCompleted ? styles.completedContainer : undefined,
+      ]}
+      onPress={onToggleComplete}
+    >
+      <Text
         style={[
-          styles.itemContainer,
-          isCompleted ? styles.completedContainer : undefined,
+          styles.itemText,
+          isCompleted ? styles.completedText : undefined,
         ]}
       >
-        <Text
-          style={[
-            styles.itemText,
-            isCompleted ? styles.completedText : undefined,
-          ]}
-        >
-          {name}
-        </Text>
-        <TouchableOpacity
-          onPress={handleDelete}
-          activeOpacity={0.8}
-        >
-          <AntDesign name="closecircle" size={24} color={isCompleted ? theme.colorGrey : theme.colorRed} />
-        </TouchableOpacity>
-      </View>
-    </>
+        {name}
+      </Text>
+      <TouchableOpacity onPress={handleDelete} activeOpacity={0.8}>
+        <AntDesign
+          name="closecircle"
+          size={24}
+          color={isCompleted ? theme.colorGrey : theme.colorRed}
+        />
+      </TouchableOpacity>
+    </Pressable>
   );
 }
 
