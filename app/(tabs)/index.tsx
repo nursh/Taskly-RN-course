@@ -7,6 +7,7 @@ type ShoppingListItemType = {
   id: string;
   name: string;
   completedAtTimestamp?: number;
+  lastUpdatedTimestamp: number;
 };
 
 export default function App() {
@@ -15,8 +16,8 @@ export default function App() {
 
   const handleSubmit = () => {
     if (value) {
-      const newShoppingList = [
-        { id: new Date().toTimeString(), name: value },
+      const newShoppingList: ShoppingListItemType[] = [
+        { id: new Date().toTimeString(), name: value, lastUpdatedTimestamp: Date.now() },
         ...shoppingList,
       ];
       setShoppingList(newShoppingList);
@@ -34,6 +35,7 @@ export default function App() {
       if (item.id === id) {
         return {
           ...item,
+          lastUpdatedTimestamp: Date.now(),
           completedAtTimestamp: item.completedAtTimestamp
             ? undefined
             : Date.now()
@@ -48,7 +50,7 @@ export default function App() {
     <FlatList
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
-      data={shoppingList}
+      data={orderShoppingList(shoppingList)}
       stickyHeaderIndices={[0]}
       ListHeaderComponent={
         <TextInput
@@ -75,6 +77,28 @@ export default function App() {
       )}
     />
   );
+}
+
+function orderShoppingList(shoppingList: ShoppingListItemType[]) {
+  return shoppingList.sort((item1, item2) => {
+    if (item1.completedAtTimestamp && item2.completedAtTimestamp) {
+      return item2.completedAtTimestamp - item1.completedAtTimestamp;
+    }
+
+    if (item1.completedAtTimestamp && !item2.completedAtTimestamp) {
+      return 1;
+    }
+
+    if (!item1.completedAtTimestamp && item2.completedAtTimestamp) {
+      return -1;
+    }
+
+    if (!item1.completedAtTimestamp && !item2.completedAtTimestamp) {
+      return item2.lastUpdatedTimestamp - item1.lastUpdatedTimestamp;
+    }
+
+    return 0;
+  });
 }
 
 const styles = StyleSheet.create({
