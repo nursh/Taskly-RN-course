@@ -5,22 +5,43 @@ import * as Notifications from "expo-notifications";
 import { useEffect, useState } from "react";
 import { Duration, intervalToDuration, isBefore } from "date-fns";
 import { TimeSegment } from "../../../components/TimeSegment";
+import { getFromStorage, saveToStorage } from "../../../utils/storage";
 
 // Due Time: 10 seconds
-const timestamp = Date.now() + 10 * 1000;
+const frequency = 10 * 1000;
+const countdownStorageKey = 'taskly-countdown';
+
+type PersistedCountdownState = {
+  currentNotificationId: string | undefined;
+  completedAtTimestamps: number[];
+}
+
 type CountdownStatus = {
   isOverdue: boolean;
   distance: Duration;
 };
 
 export default function CounterScreen() {
+  const [countdownState, setCountdownState] = useState<PersistedCountdownState>();
   const [status, setStatus] = useState<CountdownStatus>({
     isOverdue: false,
     distance: {},
   });
 
+  const lastCompletedTimestamp = countdownState?.completedAtTimestamps[0];
+
+  useEffect(() => {
+    const init = async () => {
+      const value = await getFromStorage(countdownStorageKey);
+      setCountdownState(value);
+    }
+
+    init();
+  }, []);
+
   useEffect(() => {
     const id = setInterval(() => {
+      const timestamp = lastCompletedTimestamp ? lastCompletedTimestamp + frequency : Date.now(); 
       const isOverdue = isBefore(timestamp, Date.now());
       const distance = intervalToDuration(
         isOverdue
@@ -34,22 +55,18 @@ export default function CounterScreen() {
     return () => {
       clearInterval(id);
     };
-  }, []);
-
-  const handleRequestPermission = async () => {
-    const result = await registerForPushNotificationsAsync();
-    console.log(result);
-  };
+  }, [lastCompletedTimestamp]);
 
   const scheduleNotification = async () => {
+    let pushNotificationId;
     const result = await registerForPushNotificationsAsync();
     if (result === "granted") {
-      await Notifications.scheduleNotificationAsync({
+      pushNotificationId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: "I'm a notification from taskly",
+          title: "The thing is due",
         },
         trigger: {
-          seconds: 15,
+          seconds: frequency / 1000,
           type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         },
       });
@@ -59,6 +76,18 @@ export default function CounterScreen() {
         "Enable the notifications permission for Expo Go in settings"
       );
     }
+
+    if (countdownState?.currentNotificationId) {
+      await Notifications.cancelScheduledNotificationAsync(countdownState.currentNotificationId)
+    }
+    const newCountdownState: PersistedCountdownState = {
+      currentNotificationId: pushNotificationId,
+      completedAtTimestamps: countdownState
+        ? [Date.now(), ...countdownState.completedAtTimestamps]
+        : [Date.now()]
+    };
+    setCountdownState(newCountdownState);
+    await saveToStorage(countdownStorageKey, newCountdownState);
   };
 
   return (
